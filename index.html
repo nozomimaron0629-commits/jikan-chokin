@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>じかん貯金 🐷</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700;900&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#FFF3F7;
+    --cream2:#FFE0EE;
+    --card:#FFFFFF;
+    --ink:#6B4557;
+    --ink-soft:#C49EB0;
+    --peach:#F0A0BC;
+    --peach-d:#E07898;
+    --mint:#5FCBA0;
+    --mint-bg:#E4F7EE;
+    --coral:#FF8585;
+    --coral-bg:#FFE9E9;
+    --line:#F5DDE8;
+    --shadow:0 10px 30px rgba(196,100,140,.12);
+    --shadow-sm:0 4px 14px rgba(196,100,140,.09);
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;font-family:"Zen Maru Gothic","Hiragino Maru Gothic ProN","ヒラギノ丸ゴ ProN","Hiragino Sans","Yu Gothic",YuGothic,Meiryo,system-ui,sans-serif;color:var(--ink);
+    background:
+      radial-gradient(circle, rgba(240,160,188,.14) 1.5px, transparent 1.5px),
+      radial-gradient(120% 90% at 10% 0%, #FFE0EE 0%, transparent 50%),
+      radial-gradient(120% 90% at 100% 0%, #FFE8F4 0%, transparent 45%),
+      var(--cream);
+    background-size: 22px 22px, 100% 100%, 100% 100%, 100% 100%;
+    min-height:100vh;-webkit-font-smoothing:antialiased;
+    background-attachment:fixed;
+  }
+  .wrap{max-width:520px;margin:0 auto;padding:22px 18px 60px;}
+  .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .logo{font-weight:900;font-size:22px;letter-spacing:.02em;display:flex;align-items:center;gap:8px;}
+  .logo .blob{width:34px;height:34px;border-radius:14px;background:linear-gradient(135deg,var(--peach),#FFB8D4);
+    display:grid;place-items:center;font-size:18px;box-shadow:var(--shadow-sm);}
+  .gear{background:var(--card);border:none;width:40px;height:40px;border-radius:14px;cursor:pointer;
+    font-size:18px;box-shadow:var(--shadow-sm);transition:transform .15s;}
+  .gear:active{transform:scale(.92) rotate(40deg);}
+
+  /* balance hero */
+  .hero{position:relative;border-radius:28px;padding:26px 24px 24px;color:#fff;overflow:hidden;
+    box-shadow:var(--shadow);transition:background .4s;margin-bottom:18px;}
+  .hero.pos{background:linear-gradient(140deg,#7DD3B0,#3FB587);}
+  .hero.neg{background:linear-gradient(140deg,#FCA5A5,#F07070);}
+  .hero.zero{background:linear-gradient(140deg,#F9A8D4,#EC87B0);}
+  .hero .pig{position:absolute;right:-10px;bottom:-18px;font-size:120px;opacity:.22;transform:rotate(-8deg);}
+  .hero .label{font-size:14px;opacity:.92;font-weight:500;display:flex;align-items:center;gap:6px;}
+  .hero .amount{font-family:"Quicksand","Hiragino Maru Gothic ProN","Yu Gothic",system-ui,sans-serif;font-weight:700;font-size:46px;line-height:1.05;margin:6px 0 2px;
+    text-shadow:0 2px 8px rgba(0,0,0,.12);}
+  .hero .amount .u{font-size:24px;margin-left:2px;}
+  .hero .msg{font-size:14px;font-weight:500;opacity:.96;margin-top:6px;min-height:20px;}
+
+  /* generic card */
+  .card{background:var(--card);border-radius:24px;padding:20px;box-shadow:var(--shadow-sm);margin-bottom:16px;}
+  .card h2{margin:0 0 14px;font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px;}
+  .card h2 .ic{font-size:18px;}
+
+  /* today calc */
+  .today .row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .today input[type=time]{font-family:inherit;font-size:18px;font-weight:700;color:var(--ink);
+    border:2px solid var(--line);border-radius:14px;padding:8px 12px;background:#FFFCF9;}
+  .today .res{margin-top:14px;display:grid;gap:10px;}
+  .leavebox{border-radius:18px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .leavebox.normal{background:#FFF0F5;}
+  .leavebox.early{background:var(--mint-bg);}
+  .leavebox.late{background:var(--coral-bg);}
+  .leavebox .k{font-size:13px;color:var(--ink-soft);font-weight:500;}
+  .leavebox .v{font-family:"Quicksand","Hiragino Maru Gothic ProN","Yu Gothic",system-ui,sans-serif;font-weight:700;font-size:26px;}
+  .leavebox .v small{font-size:13px;font-family:"Zen Maru Gothic";font-weight:500;display:block;text-align:right;}
+  .v.early{color:var(--mint);}
+  .v.late{color:var(--coral);}
+  .hint{font-size:12.5px;color:var(--ink-soft);margin-top:8px;line-height:1.6;}
+
+  /* entry form */
+  .form-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;align-items:end;}
+  .field{display:flex;flex-direction:column;gap:5px;}
+  .field label{font-size:12px;color:var(--ink-soft);font-weight:500;padding-left:4px;}
+  .field input{font-family:inherit;font-size:15px;font-weight:700;color:var(--ink);
+    border:2px solid var(--line);border-radius:14px;padding:9px 10px;background:#FFFCF9;width:100%;}
+  .field input:focus{outline:none;border-color:var(--peach);}
+  .addbtn{width:100%;margin-top:12px;border:none;border-radius:16px;padding:13px;cursor:pointer;
+    font-family:inherit;font-weight:700;font-size:15px;color:#fff;
+    background:linear-gradient(135deg,#F5B8D0,var(--peach-d));box-shadow:var(--shadow-sm);transition:transform .12s;}
+  .addbtn:active{transform:scale(.97);}
+
+  /* list */
+  .list{display:flex;flex-direction:column;gap:8px;}
+  .item{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:16px;background:#FFFCF9;border:1px solid var(--line);}
+  .item .date{font-weight:700;font-size:14px;width:74px;flex:none;}
+  .item .date small{display:block;font-size:11px;color:var(--ink-soft);font-weight:500;}
+  .item .times{font-size:13px;color:var(--ink-soft);flex:1;}
+  .item .diff{font-family:"Quicksand","Hiragino Maru Gothic ProN","Yu Gothic",system-ui,sans-serif;font-weight:700;font-size:15px;white-space:nowrap;}
+  .diff.p{color:var(--mint);}
+  .diff.m{color:var(--coral);}
+  .item .del{border:none;background:transparent;cursor:pointer;font-size:15px;opacity:.4;padding:2px 4px;}
+  .item .del:hover{opacity:1;}
+  .empty{text-align:center;color:var(--ink-soft);font-size:13px;padding:18px 0;}
+
+  /* settings panel */
+  .overlay{position:fixed;inset:0;background:rgba(80,55,40,.35);display:none;align-items:flex-end;justify-content:center;z-index:50;}
+  .overlay.show{display:flex;}
+  .sheet{background:var(--card);width:100%;max-width:520px;border-radius:28px 28px 0 0;padding:24px 22px 30px;box-shadow:0 -10px 40px rgba(0,0,0,.2);}
+  .sheet h3{margin:0 0 4px;font-size:18px;font-weight:900;}
+  .sheet p.sub{margin:0 0 18px;font-size:12.5px;color:var(--ink-soft);}
+  .sline{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--line);}
+  .sline label{font-size:14px;font-weight:500;}
+  .sline input{font-family:inherit;font-size:15px;font-weight:700;text-align:right;width:90px;
+    border:2px solid var(--line);border-radius:12px;padding:7px 8px;background:#FFFCF9;color:var(--ink);}
+  .sline .unit{font-size:12px;color:var(--ink-soft);margin-left:4px;}
+  .sheet .savebtn{width:100%;margin-top:18px;border:none;border-radius:16px;padding:14px;cursor:pointer;
+    font-family:inherit;font-weight:700;font-size:15px;color:#fff;background:linear-gradient(135deg,#F5B8D0,var(--peach-d));}
+  .reset{width:100%;margin-top:10px;border:none;background:transparent;color:var(--coral);font-family:inherit;font-size:12.5px;cursor:pointer;}
+  .imp .imp-note{font-size:12.5px;color:var(--ink-soft);margin:0 0 12px;line-height:1.6;}
+  .imp .imp-month{font-size:12px;color:var(--ink-soft);display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+  .imp .imp-month input{font-family:inherit;font-size:13px;font-weight:700;color:var(--ink);border:2px solid var(--line);border-radius:12px;padding:6px 9px;background:#FFFCF9;}
+  .imp textarea{width:100%;min-height:108px;font-family:"Quicksand","Zen Maru Gothic",monospace;font-size:13px;
+    color:var(--ink);border:2px solid var(--line);border-radius:16px;padding:12px;background:#FFFCF9;resize:vertical;line-height:1.7;}
+  .imp textarea:focus{outline:none;border-color:var(--peach);}
+  .status{font-size:12px;font-weight:700;text-align:center;border-radius:12px;padding:7px 10px;margin:-6px 0 16px;}
+  .status.ok{color:#3a9d76;background:var(--mint-bg);}
+  .status.warn{color:#d56a1f;background:#FFF0DF;}
+  .backup .backup-row{display:flex;gap:10px;}
+  .ghostbtn{flex:1;border:2px solid var(--line);background:#FFFCF9;border-radius:14px;padding:11px;cursor:pointer;
+    font-family:inherit;font-weight:700;font-size:13.5px;color:var(--ink);transition:transform .12s,border-color .12s;}
+  .ghostbtn:hover{border-color:var(--peach);}
+  .ghostbtn:active{transform:scale(.97);}
+  .shot-status{font-size:12.5px;font-weight:700;text-align:center;border-radius:12px;padding:0;margin-top:0;line-height:1.6;transition:all .2s;}
+  .shot-status.busy{color:var(--peach-d);background:#FFF0E6;padding:11px;margin-top:12px;}
+  .shot-status.warn{color:#d56a1f;background:#FFF0DF;padding:11px;margin-top:12px;}
+  .loading{text-align:center;padding:60px 0;color:var(--ink-soft);}
+</style>
+</head>
+<body>
+
+<div class="wrap" id="app">
+  <div class="loading">よみこみ中… 🐷</div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="sheet">
+    <h3>⚙️ せってい</h3>
+    <p class="sub">あなたの働き方に合わせて調整してね</p>
+    <div class="sline">
+      <label>1日の実働時間</label>
+      <div><input type="number" id="set-work" step="0.25" min="0"><span class="unit">時間</span></div>
+    </div>
+    <div class="sline">
+      <label>休憩時間</label>
+      <div><input type="number" id="set-break" step="5" min="0"><span class="unit">分</span></div>
+    </div>
+    <div class="sline">
+      <label>コアタイム終了</label>
+      <div><input type="time" id="set-core"></div>
+    </div>
+    <div class="sline" style="flex-direction:column;align-items:flex-start;gap:6px;">
+      <label>Firebase データベースURL <span style="font-size:11px;color:var(--ink-soft)">（PC↔スマホ同期に必要）</span></label>
+      <input id="set-fbhost" type="text" placeholder="xxx-default-rtdb.firebaseio.com" style="width:100%;font-family:monospace;font-size:13px;font-weight:400;border:2px solid var(--line);border-radius:12px;padding:8px 10px;background:#FFFCF9;color:var(--ink);">
+    </div>
+    <div class="sline" style="flex-direction:column;align-items:flex-start;gap:6px;">
+      <label>同期キー <span style="font-size:11px;color:var(--ink-soft)">（自分だけが知る合言葉・何でもOK）</span></label>
+      <input id="set-fbkey" type="text" placeholder="例: tamura2026" style="width:100%;font-family:monospace;font-size:13px;font-weight:400;border:2px solid var(--line);border-radius:12px;padding:8px 10px;background:#FFFCF9;color:var(--ink);">
+    </div>
+    <div class="sline" style="flex-direction:column;align-items:flex-start;gap:6px;">
+      <label>Anthropic APIキー <span style="font-size:11px;color:var(--ink-soft)">（スクショ読み取りに必要）</span></label>
+      <input id="set-apikey" type="password" placeholder="sk-ant-..." style="width:100%;font-family:monospace;font-size:13px;font-weight:400;border:2px solid var(--line);border-radius:12px;padding:8px 10px;background:#FFFCF9;color:var(--ink);">
+      <span style="font-size:11px;color:var(--ink-soft)"><a href="https://console.anthropic.com/" target="_blank" style="color:var(--peach-d)">console.anthropic.com</a> で取得できます</span>
+    </div>
+    <button class="savebtn" id="set-save">保存する</button>
+    <button class="reset" id="set-reset">すべての記録を消す</button>
+  </div>
+</div>
+
+<script>
+const SETTINGS_KEY = "jikan-settings";
+const ENTRIES_KEY  = "jikan-entries";
+const DEFAULTS = { workMin: 450, breakMin: 60, coreEnd: "15:00", apiKey: "", fbHost: "", fbKey: "" };
+
+let settings = {...DEFAULTS};
+let entries = {};
+
+/* ---------- storage ---------- */
+const mem = {};
+let backend = "memory";
+
+async function probeBackend(){
+  try{
+    if(window.storage && typeof window.storage.set === "function"){
+      await window.storage.set("__probe", "1", false);
+      const r = await window.storage.get("__probe", false);
+      if(r && r.value === "1"){ backend = "cloud"; return; }
+    }
+  }catch(e){}
+  try{
+    localStorage.setItem("__probe","1");
+    if(localStorage.getItem("__probe")==="1"){ localStorage.removeItem("__probe"); backend="local"; return; }
+  }catch(e){}
+  backend = "memory";
+}
+async function sGet(k){
+  try{
+    if(backend==="cloud"){ const r=await window.storage.get(k,false); return (r&&r.value!=null)?r.value:null; }
+    if(backend==="local"){ return localStorage.getItem(k); }
+  }catch(e){}
+  return (k in mem)? mem[k] : null;
+}
+async function sSet(k,v){
+  mem[k]=v;
+  try{
+    if(backend==="cloud"){ await window.storage.set(k,v,false); return true; }
+    if(backend==="local"){ localStorage.setItem(k,v); return true; }
+  }catch(e){}
+  return backend!=="memory";
+}
+
+const SEED_ENTRIES = {
+  "2026-06-01": { in:"09:51", out:"18:38", worked:467 },
+  "2026-06-02": { in:"10:06", out:"18:39", worked:453 },
+  "2026-06-03": { in:"09:51", out:"20:01", worked:550 },
+  "2026-06-04": { in:"09:57", out:"18:28", worked:451 },
+  "2026-06-05": { in:"10:49", out:"18:35", worked:406 },
+  "2026-06-08": { in:"09:42", out:"18:33", worked:471 },
+  "2026-06-09": { in:"09:51", out:"17:30", worked:399 },
+  "2026-06-10": { in:"09:50", out:"18:56", worked:486 },
+  "2026-06-11": { in:"10:00", out:"17:09", worked:369 },
+  "2026-06-12": { in:"10:10", out:"19:03", worked:473 },
+  "2026-06-15": { in:"09:47", out:"18:43", worked:476 },
+  "2026-06-16": { in:"09:53", out:"18:44", worked:471 },
+  "2026-06-17": { in:"09:53", out:"17:33", worked:400 },
+  "2026-06-18": { in:"09:51", out:"18:25", worked:454 },
+  "2026-06-19": { in:"09:27", out:"18:07", worked:460 },
+  "2026-06-22": { in:"09:16", out:"18:02", worked:466 },
+  "2026-06-23": { in:"09:24", out:"18:51", worked:507 },
+  "2026-06-24": { in:"10:46", out:"18:55", worked:429 },
+  "2026-06-25": { in:"08:46", out:"17:30", worked:464 },
+  "2026-06-26": { in:"09:47", out:"19:53", worked:546 },
+  "2026-06-29": { in:"09:22" }
+};
+
+async function loadAll(){
+  // まずローカルから設定だけ読む（Firebase接続情報が必要なので）
+  const s = await sGet(SETTINGS_KEY); if(s){ try{ settings = {...DEFAULTS, ...JSON.parse(s)}; }catch(e){} }
+  // Firebaseが設定されていればそちらを優先
+  const fb = await fbLoad();
+  if(fb && fb.entries){
+    entries = {...SEED_ENTRIES, ...fb.entries}; // SEEDを下敷きにFirebaseで上書き
+    if(fb.workMin)  settings.workMin  = fb.workMin;
+    if(fb.breakMin) settings.breakMin = fb.breakMin;
+    if(fb.coreEnd)  settings.coreEnd  = fb.coreEnd;
+    await sSet(ENTRIES_KEY, JSON.stringify(entries)); // ローカルにもキャッシュ
+    return;
+  }
+  // Firebaseが無ければローカル
+  const e = await sGet(ENTRIES_KEY);
+  if(e){ try{ entries = {...SEED_ENTRIES, ...JSON.parse(e)}; }catch(e){ entries = {...SEED_ENTRIES}; } }
+  else { entries = {...SEED_ENTRIES}; }
+}
+async function saveSettings(){ await sSet(SETTINGS_KEY, JSON.stringify(settings)); }
+async function saveEntries(){
+  await sSet(ENTRIES_KEY, JSON.stringify(entries));
+  await fbSave();
+}
+
+/* ---------- Firebase sync ---------- */
+function fbBaseUrl(){
+  if(!settings.fbHost || !settings.fbKey) return null;
+  const host = settings.fbHost.replace(/^https?:\/\//, "").replace(/\/$/, "");
+  return `https://${host}/jikan-chokin-${settings.fbKey}`;
+}
+async function fbLoad(){
+  const url = fbBaseUrl(); if(!url) return null;
+  try{
+    const r = await fetch(`${url}.json`);
+    if(!r.ok) return null;
+    return await r.json();
+  }catch(e){ return null; }
+}
+async function fbSave(){
+  const url = fbBaseUrl(); if(!url) return;
+  try{
+    await fetch(`${url}.json`, {
+      method:"PUT",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ entries, workMin: settings.workMin, breakMin: settings.breakMin, coreEnd: settings.coreEnd })
+    });
+  }catch(e){}
+}
+
+const backendLabel = () =>
+  (settings.fbHost && settings.fbKey) ? {t:"✓ Firebase同期中（PC↔スマホ自動同期）", c:"ok"} :
+  backend==="local"                    ? {t:"✓ この端末に保存中", c:"ok"} :
+                                         {t:"⚠ 一時保存のみ・Firebaseを設定してね", c:"warn"};
+
+/* ---------- helpers ---------- */
+const toMin = s => { if(!s) return null; const [h,m]=s.split(":").map(Number); return h*60+m; };
+const toHHMM = m => { m=Math.round(m); const h=Math.floor(((m%1440)+1440)%1440/60); const mm=((m%60)+60)%60; return String(h).padStart(2,"0")+":"+String(mm).padStart(2,"0"); };
+function fmtSigned(min){
+  const s = min>0?"+":(min<0?"−":"±");
+  const a = Math.abs(Math.round(min));
+  const h = Math.floor(a/60), mm = a%60;
+  if(h&&mm) return `${s}${h}時間${mm}分`;
+  if(h) return `${s}${h}時間`;
+  return `${s}${mm}分`;
+}
+function dayDiff(e){
+  let worked;
+  if(e.worked != null) worked = e.worked;
+  else {
+    const i=toMin(e.in), o=toMin(e.out);
+    if(i==null||o==null) return null;
+    worked = (o-i) - settings.breakMin;
+  }
+  return worked - settings.workMin;
+}
+const currentMonthStr = () => { const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`; };
+const totalBalance = () => Object.entries(entries).filter(([k])=>k.startsWith(currentMonthStr())).reduce((a,[,e])=>{const d=dayDiff(e);return a+(d??0);},0);
+const todayStr = () => { const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; };
+const wd = ["日","月","火","水","木","金","土"];
+function prettyDate(ds){ const [y,m,d]=ds.split("-").map(Number); const dt=new Date(y,m-1,d); return {md:`${m}/${d}`, w:wd[dt.getDay()]}; }
+
+/* ---------- render ---------- */
+function render(){
+  const bal = totalBalance();
+  const cls = bal>2 ? "pos" : (bal<-2 ? "neg" : "zero");
+  let msg;
+  if(bal>2) msg = `🎉 ${fmtSigned(bal)}の貯金！早く帰れるよ`;
+  else if(bal<-2) msg = `すこし借りてる状態。ちょっとだけ多めに働こ`;
+  else msg = `ぴったり！いいペースだよ`;
+
+  const app = document.getElementById("app");
+  app.innerHTML = `
+    <div class="topbar">
+      <div class="logo"><span class="blob">🐷</span>じかん貯金</div>
+      <button class="gear" id="gear">⚙️</button>
+    </div>
+
+    <div class="hero ${cls}">
+      <span class="pig">🐷</span>
+      <div class="label">🪙 いまの時間貯金</div>
+      <div class="amount">${fmtSigned(bal).replace(/(時間|分)/g,'<span class="u">$1</span>')}</div>
+      <div class="msg">${msg}</div>
+    </div>
+
+    <div class="status ${backendLabel().c}">${backendLabel().t}</div>
+
+    <div class="card today">
+      <h2><span class="ic">🏃</span>今日は何時に帰れる？</h2>
+      <div class="row">
+        <span style="font-size:13px;color:var(--ink-soft)">出勤したのは</span>
+        <input type="time" id="today-in" value="${entries[todayStr()]?.in || "09:00"}">
+      </div>
+      <div class="res" id="today-res"></div>
+    </div>
+
+    <div class="card imp">
+      <h2><span class="ic">📸</span>スクショから取り込み</h2>
+      <p class="imp-note">MFの勤怠画面のスクショをこのチャットに貼り付けてね。AIが日付・出退勤・<b>総労働</b>を読み取ってJSONを作るので、それを「バックアップ → 読み込み」で取り込めます。</p>
+      <button class="addbtn" id="shot-btn">📂 スクショを選ぶ</button>
+      <input type="file" id="shot-file" accept="image/*" style="display:none">
+      <div id="shot-status" class="shot-status"></div>
+    </div>
+
+    <div class="card">
+      <h2><span class="ic">📝</span>1件だけ手入力 / 修正</h2>
+      <div class="form-grid">
+        <div class="field"><label>日付</label><input type="date" id="f-date" value="${todayStr()}"></div>
+        <div class="field"><label>出勤</label><input type="time" id="f-in" value="09:00"></div>
+        <div class="field"><label>退勤</label><input type="time" id="f-out" value="17:30"></div>
+      </div>
+      <button class="addbtn" id="f-add">＋ 記録する</button>
+    </div>
+
+    <div class="card">
+      <h2><span class="ic">📚</span>これまでの記録</h2>
+      <div class="list" id="list"></div>
+    </div>
+
+    <div class="card backup">
+      <h2><span class="ic">💾</span>バックアップ</h2>
+      <p class="imp-note">大事な記録を失わないための保険。<b>書き出し</b>でファイルを保存しておけば、別の端末や、もし消えても<b>読み込み</b>で元どおりにできます。</p>
+      <div class="backup-row">
+        <button class="ghostbtn" id="bk-export">⬇️ 書き出し（保存）</button>
+        <button class="ghostbtn" id="bk-import">⬆️ 読み込み（復元）</button>
+      </div>
+      <input type="file" id="bk-file" accept="application/json,.json" style="display:none">
+    </div>
+  `;
+
+  renderToday();
+  renderList();
+
+  document.getElementById("gear").onclick = openSettings;
+  document.getElementById("today-in").oninput = renderToday;
+  document.getElementById("f-add").onclick = addEntry;
+  document.getElementById("shot-btn").onclick = () => {
+    if(!settings.apiKey){ openSettings(); return; }
+    document.getElementById("shot-file").click();
+  };
+  document.getElementById("shot-file").onchange = readShot;
+  document.getElementById("bk-export").onclick = exportData;
+  document.getElementById("bk-import").onclick = ()=> document.getElementById("bk-file").click();
+  document.getElementById("bk-file").onchange = importData;
+}
+
+function renderToday(){
+  const box = document.getElementById("today-res");
+  const inV = document.getElementById("today-in").value;
+  const i = toMin(inV);
+  if(i==null){ box.innerHTML=""; return; }
+  const bal = totalBalance();
+  const normalOut = i + settings.workMin + settings.breakMin;
+  const coreEnd = toMin(settings.coreEnd);
+  let targetOut = normalOut - bal;
+  let capped = false;
+  if(targetOut < coreEnd){ targetOut = coreEnd; capped = true; }
+
+  const normalBox = `
+    <div class="leavebox normal">
+      <span class="k">ちょうど働く退勤</span>
+      <span class="v">${toHHMM(normalOut)}</span>
+    </div>`;
+
+  let mainBox = "";
+  const delta = normalOut - targetOut;
+  if(bal>2){
+    mainBox = `
+      <div class="leavebox early">
+        <span class="k">貯金を使えば 🎉</span>
+        <span class="v early">${toHHMM(targetOut)}<small>${capped?"コアタイムまで":fmtSigned(delta)+"早く"}</small></span>
+      </div>`;
+  }else if(bal<-2){
+    mainBox = `
+      <div class="leavebox late">
+        <span class="k">借りを返すなら</span>
+        <span class="v late">${toHHMM(targetOut)}<small>${fmtSigned(-delta)}多めに</small></span>
+      </div>`;
+  }
+  let hint = "";
+  if(capped && bal>2) hint = `※ コアタイム（${settings.coreEnd}）までは在席が必要なので、貯金を全部は使い切れない日もあるよ。残りはまた別の日に🐷`;
+  else if(bal>2) hint = `※ ${settings.coreEnd}以降ならいつでもOK。今日は早上がりしちゃおう！`;
+
+  box.innerHTML = mainBox + normalBox + (hint?`<div class="hint">${hint}</div>`:"");
+}
+
+function renderList(){
+  const list = document.getElementById("list");
+  const keys = Object.keys(entries).filter(k=>k.startsWith(currentMonthStr())).sort().reverse();
+  if(!keys.length){ list.innerHTML = `<div class="empty">まだ記録がないよ。上のフォームから追加してね 🌱</div>`; return; }
+  list.innerHTML = keys.map(k=>{
+    const e = entries[k]; const d = dayDiff(e);
+    const pd = prettyDate(k);
+    const dc = d>0?"p":(d<0?"m":"");
+    return `<div class="item">
+      <div class="date">${pd.md}<small>(${pd.w})</small></div>
+      <div class="times">${e.in||"--:--"} → ${e.out||"--:--"}</div>
+      <div class="diff ${dc}">${d==null?"—":fmtSigned(d)}</div>
+      <button class="del" data-k="${k}">✕</button>
+    </div>`;
+  }).join("");
+  list.querySelectorAll(".del").forEach(b=> b.onclick = ()=> delEntry(b.dataset.k));
+}
+
+/* ---------- OCR ---------- */
+function loadImage(file){
+  return new Promise((res,rej)=>{
+    const url=URL.createObjectURL(file);
+    const img=new Image();
+    img.onload=()=>{ URL.revokeObjectURL(url); res(img); };
+    img.onerror=()=>{ URL.revokeObjectURL(url); rej(new Error("画像を開けなかった")); };
+    img.src=url;
+  });
+}
+async function fileToImagePart(file){
+  const okType=/image\/(png|jpeg|webp|gif)/.test(file.type);
+  try{
+    const img=await loadImage(file);
+    const maxW=2200;
+    if(okType && img.naturalWidth<=maxW && file.size<3500000){
+      return new Promise((res,rej)=>{
+        const r=new FileReader();
+        r.onload=()=>res({media:file.type,data:String(r.result).split(",")[1]});
+        r.onerror=()=>rej(new Error("読めなかった"));
+        r.readAsDataURL(file);
+      });
+    }
+    const scale=Math.min(1,maxW/img.naturalWidth);
+    const c=document.createElement("canvas");
+    c.width=Math.round(img.naturalWidth*scale);
+    c.height=Math.round(img.naturalHeight*scale);
+    c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+    return {media:"image/jpeg",data:c.toDataURL("image/jpeg",0.92).split(",")[1]};
+  }catch(e){
+    return new Promise((res,rej)=>{
+      const r=new FileReader();
+      r.onload=()=>res({media:okType?file.type:"image/png",data:String(r.result).split(",")[1]});
+      r.onerror=()=>rej(new Error("読めなかった"));
+      r.readAsDataURL(file);
+    });
+  }
+}
+async function ocrViaClaude(b64,media){
+  const prompt=`この画像はマネーフォワード勤怠の月次一覧表です。出勤と退勤の両方が入っている日だけを抽出してください。
+・画面上部の「YYYY/MM/DD ～」から年と月を判断し、各行の日にち(1〜31)と組み合わせて日付を作る。
+・「総労働」列(例 07:47h)は7時間47分=467分の意味。これを分に直して worked_min に入れる。総労働が無ければ null。
+・出勤だけで退勤が無い日(勤務中)、公休・有給・空欄の日は除外する。
+出力は次の形のJSON配列だけ。説明やマークダウン記号は一切付けない:
+[{"date":"2026-06-01","in":"09:51","out":"18:38","worked_min":467}]`;
+  const resp=await fetch("https://api.anthropic.com/v1/messages",{
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json",
+      "x-api-key":settings.apiKey,
+      "anthropic-version":"2023-06-01",
+      "anthropic-dangerous-direct-browser-access":"true"
+    },
+    body:JSON.stringify({
+      model:"claude-haiku-4-5-20251001",
+      max_tokens:1000,
+      messages:[{role:"user",content:[
+        {type:"image",source:{type:"base64",media_type:media,data:b64}},
+        {type:"text",text:prompt}
+      ]}]
+    })
+  });
+  if(!resp.ok){ const t=await resp.text().catch(()=>""); throw new Error("API"+resp.status+" "+t.slice(0,120)); }
+  const data=await resp.json();
+  if(data&&data.error) throw new Error("API "+(data.error.message||"error"));
+  let text=(data.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("\n").trim();
+  text=text.replace(/```json/gi,"").replace(/```/g,"").trim();
+  const s=text.indexOf("["),e=text.lastIndexOf("]");
+  if(s>=0&&e>s) text=text.slice(s,e+1);
+  let arr; try{ arr=JSON.parse(text); }catch(err){ throw new Error("PARSE"); }
+  if(!Array.isArray(arr)) return [];
+  return arr.filter(x=>x&&x.date&&x.in&&x.out).map(x=>({
+    date:x.date, in:x.in, out:x.out,
+    worked:(x.worked_min!=null&&!isNaN(x.worked_min))?Number(x.worked_min):((toMin(x.out)-toMin(x.in))-settings.breakMin)
+  }));
+}
+async function readShot(ev){
+  const file=ev.target.files&&ev.target.files[0];
+  if(!file) return;
+  const st=document.getElementById("shot-status");
+  st.className="shot-status busy";
+  st.textContent="📖 読み取り中…（10〜20秒ほど）";
+  try{
+    const part=await fileToImagePart(file);
+    const result=await ocrViaClaude(part.data,part.media);
+    if(!result.length){
+      st.className="shot-status warn";
+      st.textContent="読み取れる勤務日が見つからなかった…別のスクショか手入力で試してね";
+      ev.target.value=""; return;
+    }
+    result.forEach(r=>{ entries[r.date]={in:r.in,out:r.out,worked:r.worked}; });
+    await saveEntries();
+    render();
+    setTimeout(()=>alert(`${result.length}日ぶん取り込んだよ！🎉`),60);
+  }catch(err){
+    console.error(err);
+    const m=err&&err.message||"";
+    let msg="読み取り失敗… ";
+    if(m.includes("API401")||m.includes("API403")) msg+="APIキーが正しくないかも。⚙️設定で確認してね";
+    else if(m==="PARSE") msg+="表を解釈できなかった。半月ずつ2枚に分けて試してみて";
+    else msg+=m.slice(0,80);
+    st.className="shot-status warn";
+    st.textContent=msg;
+  }
+  ev.target.value="";
+}
+
+/* ---------- actions ---------- */
+async function addEntry(){
+  const date = document.getElementById("f-date").value;
+  const inV = document.getElementById("f-in").value;
+  const outV = document.getElementById("f-out").value;
+  if(!date || !inV || !outV){ alert("日付・出勤・退勤を入れてね"); return; }
+  if(toMin(outV) <= toMin(inV)){ alert("退勤は出勤より後の時刻にしてね"); return; }
+  entries[date] = { in:inV, out:outV };
+  await saveEntries();
+  render();
+}
+
+async function delEntry(k){
+  delete entries[k];
+  await saveEntries();
+  render();
+}
+
+/* ---------- backup ---------- */
+function exportData(){
+  const payload = { app:"jikan-chokin", version:1, exportedAt:new Date().toISOString(), settings, entries };
+  const blob = new Blob([JSON.stringify(payload,null,2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = `jikan-chokin-backup-${todayStr()}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=> URL.revokeObjectURL(url), 1000);
+}
+function importData(ev){
+  const file = ev.target.files && ev.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = async () => {
+    try{
+      const data = JSON.parse(reader.result);
+      const incoming = data.entries || {};
+      const count = Object.keys(incoming).length;
+      if(!count){ alert("このファイルには記録が入っていないみたい🐷"); return; }
+      const mode = confirm(`${count}件の記録が見つかりました。\n\n[OK] 今の記録に追加・上書き（マージ）\n[キャンセル] 全部この内容に置き換え`);
+      if(mode) entries = {...entries, ...incoming};
+      else     entries = incoming;
+      if(data.settings) settings = {...DEFAULTS, ...data.settings};
+      await saveEntries(); await saveSettings();
+      render();
+      setTimeout(()=> alert("復元したよ！🎉"), 60);
+    }catch(e){ alert("読み込めなかった…バックアップファイル(.json)を選んでね"); }
+    finally{ ev.target.value = ""; }
+  };
+  reader.readAsText(file);
+}
+
+/* ---------- settings ---------- */
+function openSettings(){
+  document.getElementById("set-work").value = (settings.workMin/60);
+  document.getElementById("set-break").value = settings.breakMin;
+  document.getElementById("set-core").value = settings.coreEnd;
+  document.getElementById("set-fbhost").value = settings.fbHost || "";
+  document.getElementById("set-fbkey").value = settings.fbKey || "";
+  document.getElementById("set-apikey").value = settings.apiKey || "";
+  document.getElementById("overlay").classList.add("show");
+}
+function closeSettings(){ document.getElementById("overlay").classList.remove("show"); }
+document.getElementById("overlay").onclick = e=>{ if(e.target.id==="overlay") closeSettings(); };
+document.getElementById("set-save").onclick = async ()=>{
+  const w = parseFloat(document.getElementById("set-work").value);
+  const b = parseInt(document.getElementById("set-break").value,10);
+  const c = document.getElementById("set-core").value;
+  if(!isNaN(w)) settings.workMin = Math.round(w*60);
+  if(!isNaN(b)) settings.breakMin = b;
+  if(c) settings.coreEnd = c;
+  settings.fbHost = document.getElementById("set-fbhost").value.trim();
+  settings.fbKey  = document.getElementById("set-fbkey").value.trim();
+  settings.apiKey = document.getElementById("set-apikey").value.trim();
+  await saveSettings();
+  await fbSave(); // 設定変更後すぐに同期
+  closeSettings();
+  render();
+};
+document.getElementById("set-reset").onclick = async ()=>{
+  if(!confirm("すべての勤怠記録を消します。よろしいですか？")) return;
+  entries = {};
+  await saveEntries();
+  closeSettings();
+  render();
+};
+
+/* ---------- boot ---------- */
+(async ()=>{ await probeBackend(); await loadAll(); render(); })();
+</script>
+</body>
+</html>
