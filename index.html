@@ -298,7 +298,17 @@ function dayDiff(e){
   else {
     const i=toMin(e.in), o=toMin(e.out);
     if(i==null||o==null) return null;
-    worked = (o-i) - settings.breakMin;
+    let breakTime = settings.breakMin;
+    // 休憩入りと休憩終了が記入されていれば、その差分を使用
+    if(e.breakIn != null && e.breakOut != null){
+      const bi = toMin(e.breakIn), bo = toMin(e.breakOut);
+      if(bi != null && bo != null) breakTime = bo - bi;
+      else breakTime = 0; // どちらか一方だけ記入されていたらゼロ
+    }else if(e.breakIn != null || e.breakOut != null){
+      // どちらか一方だけ記入されていたらゼロ
+      breakTime = 0;
+    }
+    worked = (o-i) - breakTime;
   }
   return worked - settings.workMin;
 }
@@ -344,10 +354,10 @@ function render(){
 
     <div class="card">
       <h2><span class="ic">📝</span>1件だけ手入力 / 修正</h2>
-      <div class="form-grid">
+      <div class="form-grid" style="grid-template-columns:1fr 1fr;">
         <div class="field"><label>日付</label><input type="date" id="f-date" value="${todayStr()}"></div>
-        <div class="field"><label>出勤</label><input type="time" id="f-in" value="${entries[todayStr()]?.in || "09:00"}"></div>
-        <div class="field"><label>退勤</label><input type="time" id="f-out" value="17:30"></div>
+        <div class="field"><label>タイプ</label><select id="f-type" style="font-family:inherit;font-size:15px;font-weight:700;color:var(--ink);border:2px solid var(--line);border-radius:14px;padding:9px 10px;background:#FFFCF9;width:100%;cursor:pointer;"><option value="in">出勤</option><option value="out">退勤</option><option value="breakIn">休憩入り</option><option value="breakOut">休憩終了</option></select></div>
+        <div class="field"><label id="f-label">出勤</label><input type="time" id="f-time" value="${entries[todayStr()]?.in || "09:00"}"></div>
       </div>
       <button class="addbtn" id="f-add">＋ 記録する</button>
     </div>
@@ -364,18 +374,17 @@ function render(){
 
   document.getElementById("gear").onclick = openSettings;
   const todayInEl = document.getElementById("today-in");
-  const fInEl = document.getElementById("f-in");
-  todayInEl.oninput = () => { fInEl.value = todayInEl.value; renderToday(); };
+  todayInEl.oninput = () => { renderToday(); };
   todayInEl.onchange = async () => {
     const v = todayInEl.value; if(!v) return;
     const ds = todayStr();
     entries[ds] = { ...(entries[ds]||{}), in: v };
     await saveEntries();
   };
-  fInEl.oninput = () => {
-    if(document.getElementById("f-date").value === todayStr()){
-      todayInEl.value = fInEl.value; renderToday();
-    }
+  document.getElementById("f-type").onchange = ()=>{
+    const t = document.getElementById("f-type").value;
+    const label = {in:"出勤",out:"退勤",breakIn:"休憩入り",breakOut:"休憩終了"}[t];
+    document.getElementById("f-label").textContent = label;
   };
   document.getElementById("f-add").onclick = addEntry;
 
@@ -429,9 +438,11 @@ function renderList(){
     const e = entries[k]; const d = dayDiff(e);
     const pd = prettyDate(k);
     const dc = d>0?"p":(d<0?"m":"");
+    let timeStr = `${e.in||"--:--"} → ${e.out||"--:--"}`;
+    if(e.breakIn || e.breakOut) timeStr += ` (休憩: ${e.breakIn||"--:--"} → ${e.breakOut||"--:--"})`;
     return `<div class="item">
       <div class="date">${pd.md}<small>(${pd.w})</small></div>
-      <div class="times">${e.in||"--:--"} → ${e.out||"--:--"}</div>
+      <div class="times">${timeStr}</div>
       <div class="diff ${dc}">${d==null?"—":fmtSigned(d)}</div>
       <button class="del" data-k="${k}">✕</button>
     </div>`;
@@ -443,11 +454,21 @@ function renderList(){
 /* ---------- actions ---------- */
 async function addEntry(){
   const date = document.getElementById("f-date").value;
-  const inV = document.getElementById("f-in").value;
-  const outV = document.getElementById("f-out").value;
-  if(!date || !inV || !outV){ alert("日付・出勤・退勤を入れてね"); return; }
-  if(toMin(outV) <= toMin(inV)){ alert("退勤は出勤より後の時刻にしてね"); return; }
-  entries[date] = { in:inV, out:outV };
+  const type = document.getElementById("f-type").value;
+  const timeV = document.getElementById("f-time").value;
+  if(!date || !timeV){ alert("日付と時刻を入れてね"); return; }
+  if(!entries[date]) entries[date] = {};
+  if(type === "in") entries[date].in = timeV;
+  else if(type === "out") entries[date].out = timeV;
+  else if(type === "breakIn") entries[date].breakIn = timeV;
+  else if(type === "breakOut") entries[date].breakOut = timeV;
+  // 簡易的なバリデーション
+  const i = toMin(entries[date].in);
+  const o = toMin(entries[date].out);
+  if(i != null && o != null && o <= i){ alert("退勤は出勤より後の時刻にしてね"); return; }
+  const bi = toMin(entries[date].breakIn);
+  const bo = toMin(entries[date].breakOut);
+  if(bi != null && bo != null && bo <= bi){ alert("休憩終了は休憩入りより後の時刻にしてね"); return; }
   await saveEntries();
   render();
 }
