@@ -354,10 +354,14 @@ function render(){
 
     <div class="card">
       <h2><span class="ic">📝</span>1件だけ手入力 / 修正</h2>
-      <div class="form-grid" style="grid-template-columns:1fr 1fr;">
+      <div class="form-grid">
         <div class="field"><label>日付</label><input type="date" id="f-date" value="${todayStr()}"></div>
-        <div class="field"><label>タイプ</label><select id="f-type" style="font-family:inherit;font-size:15px;font-weight:700;color:var(--ink);border:2px solid var(--line);border-radius:14px;padding:9px 10px;background:#FFFCF9;width:100%;cursor:pointer;"><option value="in">出勤</option><option value="out">退勤</option><option value="breakIn">休憩入り</option><option value="breakOut">休憩終了</option></select></div>
-        <div class="field"><label id="f-label">出勤</label><input type="time" id="f-time" value="${entries[todayStr()]?.in || "09:00"}"></div>
+        <div class="field"><label>出勤</label><input type="time" id="f-in" value="${entries[todayStr()]?.in || ""}"></div>
+        <div class="field"><label>退勤</label><input type="time" id="f-out" value="${entries[todayStr()]?.out || ""}"></div>
+      </div>
+      <div class="form-grid" style="grid-template-columns:1fr 1fr;margin-top:10px;">
+        <div class="field"><label>休憩項目</label><select id="f-type" style="font-family:inherit;font-size:15px;font-weight:700;color:var(--ink);border:2px solid var(--line);border-radius:14px;padding:9px 10px;background:#FFFCF9;width:100%;cursor:pointer;"><option value="breakIn">休憩入り</option><option value="breakOut">休憩終わり</option></select></div>
+        <div class="field"><label>休憩時刻</label><input type="time" id="f-break-time" value="${entries[todayStr()]?.breakIn || ""}"></div>
       </div>
       <button class="addbtn" id="f-add">＋ 記録する</button>
     </div>
@@ -382,9 +386,15 @@ function render(){
     await saveEntries();
   };
   document.getElementById("f-type").onchange = ()=>{
-    const t = document.getElementById("f-type").value;
-    const label = {in:"出勤",out:"退勤",breakIn:"休憩入り",breakOut:"休憩終了"}[t];
-    document.getElementById("f-label").textContent = label;
+    const type = document.getElementById("f-type").value;
+    const dateEntry = entries[document.getElementById("f-date").value] || {};
+    document.getElementById("f-break-time").value = type === "breakIn" ? (dateEntry.breakIn || "") : (dateEntry.breakOut || "");
+  };
+  document.getElementById("f-date").onchange = ()=>{
+    const dateEntry = entries[document.getElementById("f-date").value] || {};
+    document.getElementById("f-in").value = dateEntry.in || "";
+    document.getElementById("f-out").value = dateEntry.out || "";
+    document.getElementById("f-break-time").value = document.getElementById("f-type").value === "breakIn" ? (dateEntry.breakIn || "") : (dateEntry.breakOut || "");
   };
   document.getElementById("f-add").onclick = addEntry;
 
@@ -455,13 +465,15 @@ function renderList(){
 async function addEntry(){
   const date = document.getElementById("f-date").value;
   const type = document.getElementById("f-type").value;
-  const timeV = document.getElementById("f-time").value;
-  if(!date || !timeV){ alert("日付と時刻を入れてね"); return; }
+  const inV = document.getElementById("f-in").value;
+  const outV = document.getElementById("f-out").value;
+  const breakV = document.getElementById("f-break-time").value;
+  if(!date || (!inV && !outV && !breakV)){ alert("日付と時刻を入れてね"); return; }
   if(!entries[date]) entries[date] = {};
-  if(type === "in") entries[date].in = timeV;
-  else if(type === "out") entries[date].out = timeV;
-  else if(type === "breakIn") entries[date].breakIn = timeV;
-  else if(type === "breakOut") entries[date].breakOut = timeV;
+  if(inV) entries[date].in = inV;
+  if(outV) entries[date].out = outV;
+  if(type === "breakIn" && breakV) entries[date].breakIn = breakV;
+  else if(type === "breakOut" && breakV) entries[date].breakOut = breakV;
   // 簡易的なバリデーション
   const i = toMin(entries[date].in);
   const o = toMin(entries[date].out);
