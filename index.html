@@ -83,10 +83,19 @@
   .form-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;align-items:end;}
   .field{display:flex;flex-direction:column;gap:5px;}
   .field label{font-size:12px;color:var(--ink-soft);font-weight:500;padding-left:4px;}
-  .field input{font-family:inherit;font-size:15px;font-weight:700;color:var(--ink);
+  .field input,.field select{font-family:inherit;font-size:15px;font-weight:700;color:var(--ink);
     border:2px solid var(--line);border-radius:14px;padding:9px 10px;background:#FFFCF9;width:100%;}
-  .field input:focus{outline:none;border-color:var(--peach);}
-  .addbtn{width:100%;margin-top:12px;border:none;border-radius:16px;padding:13px;cursor:pointer;
+  .field input:focus,.field select:focus{outline:none;border-color:var(--peach);}
+  .entry-date{margin-bottom:14px;}
+  .work-fields{grid-template-columns:1fr 1fr;gap:12px;}
+  .work-fields .field input{font-size:21px;padding:12px 11px;}
+  .break-entry{margin-top:16px;padding:12px 12px 10px;border-radius:16px;background:#FFF8FB;}
+  .break-entry .break-title{display:block;margin-bottom:8px;font-size:11px;color:var(--ink-soft);font-weight:700;}
+  .break-fields{grid-template-columns:1.2fr 1fr;gap:8px;}
+  .break-fields .field{gap:3px;}
+  .break-fields .field label{font-size:11px;}
+  .break-fields .field input,.break-fields .field select{font-size:13px;padding:8px 9px;border-radius:11px;}
+  .addbtn{width:100%;margin-top:14px;border:none;border-radius:16px;padding:13px;cursor:pointer;
     font-family:inherit;font-weight:700;font-size:15px;color:#fff;
     background:linear-gradient(135deg,#F5B8D0,var(--peach-d));box-shadow:var(--shadow-sm);transition:transform .12s;}
   .addbtn:active{transform:scale(.97);}
@@ -354,14 +363,17 @@ function render(){
 
     <div class="card">
       <h2><span class="ic">📝</span>1件だけ手入力 / 修正</h2>
-      <div class="form-grid">
-        <div class="field"><label>日付</label><input type="date" id="f-date" value="${todayStr()}"></div>
+      <div class="field entry-date"><label>日付</label><input type="date" id="f-date" value="${todayStr()}"></div>
+      <div class="form-grid work-fields">
         <div class="field"><label>出勤</label><input type="time" id="f-in" value="${entries[todayStr()]?.in || ""}"></div>
         <div class="field"><label>退勤</label><input type="time" id="f-out" value="${entries[todayStr()]?.out || ""}"></div>
       </div>
-      <div class="form-grid" style="grid-template-columns:1fr 1fr;margin-top:10px;">
-        <div class="field"><label>休憩項目</label><select id="f-type" style="font-family:inherit;font-size:15px;font-weight:700;color:var(--ink);border:2px solid var(--line);border-radius:14px;padding:9px 10px;background:#FFFCF9;width:100%;cursor:pointer;"><option value="breakIn">休憩入り</option><option value="breakOut">休憩終わり</option></select></div>
+      <div class="break-entry">
+        <span class="break-title">休憩を記録（必要なときだけ）</span>
+        <div class="form-grid break-fields">
+          <div class="field"><label>項目</label><select id="f-type"><option value="breakIn">休憩入り</option><option value="breakOut">休憩終わり</option></select></div>
         <div class="field"><label>休憩時刻</label><input type="time" id="f-break-time" value="${entries[todayStr()]?.breakIn || ""}"></div>
+        </div>
       </div>
       <button class="addbtn" id="f-add">＋ 記録する</button>
     </div>
