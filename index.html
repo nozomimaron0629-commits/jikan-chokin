@@ -390,11 +390,12 @@ function render(){
 
   document.getElementById("gear").onclick = openSettings;
   const todayInEl = document.getElementById("today-in");
-  todayInEl.oninput = () => { renderToday(); };
-  todayInEl.onchange = async () => {
-    const v = todayInEl.value; if(!v) return;
+  todayInEl.oninput = async () => {
+    renderToday();
     const ds = todayStr();
+    const v = todayInEl.value;
     entries[ds] = { ...(entries[ds]||{}), in: v };
+    document.getElementById("f-in").value = v;
     await saveEntries();
   };
   document.getElementById("f-type").onchange = ()=>{
